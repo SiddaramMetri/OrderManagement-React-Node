@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>
+        Order Management
+    </title>
+
+</head>
+
+<body>
+    <div id="root">
+
+    </div>
+
+    <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+    <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+
+
+    <script type="text/babel">
+        const rootHandle = document.getElementById('root')
+        const { useState, useEffect } = React
+
+        const matchedData = (datas, menuItem) => {
+            const result = datas.map(Ele => {
+                // console.log(Ele)
+                const orderedMenuItem = menuItem.find((ele) => ele._id === Ele.menuItemId);
+                return { orderId: Ele._id, status: Ele.status, ...orderedMenuItem }
+            })
+            return result
+        }
+
+        const findtheMatchData = (datas, menuItem) => {
+            const orderedMenuItem = menuItem.find((item) => item._id === datas.menuItemId);
+            if (orderedMenuItem) {
+                return { orderId: datas._id, status: datas.status, ...orderedMenuItem }
+            }
+        }
+
+        const MenuItem = (props) => {
+            const { data, title } = props
+
+            const [editOption, setEditOption] = useState(false)
+
+            const handleEdit = () => {
+                setEditOption(!editOption)
+            }
+
+            return (
+                <div className="col-md-4 card p-3 ">
+                    <h3>{title}</h3>
+                    <table className="table table-striped">
+                        <thead>
+                            <tr>
+                                <td>Name</td>
+                                <td>Type</td>
+                                <td>Amount</td>
+                                <td >Action</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.map((Ele, i) => {
+                                return <tr key={i}>
+                                    <td>{Ele.name}</td>
+                                    <td>{Ele.type}</td>
+                                    <td>{Ele.amount}</td>
+                                    <td><button onClick={handleEdit} className="btn btn-success btn-sm">edit</button></td>
+                                    <td><button className="btn btn-danger btn-sm">delete</button></td>
+                                </tr>
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )
+        }
+
+        const OrderItem = (props) => {
+            const { data, handleOrderAdd } = props
+            return (
+                <div className="d-flex flex-wrap gap-3">
+                    {data.map((ele, i) => {
+                        return (
+                            <div className="col-md-4" key={i}>
+                                <div className="card mb-2 p-2">
+                                    <div className="card-body">
+                                        <div className="d-flex justify-content-between">
+                                            <div>{ele.name}</div>
+                                            <button className="btn btn-success btn-sm" onClick={() => { handleOrderAdd(ele._id) }}>Add</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )
+        }
+
+        const OrderedItem = (props) => {
+            const { data, handleCheckChange } = props
+
+            return (
+                <div className="d-flex flex-wrap gap-2">
+                    {data.map((ele, i) => {
+                        return (
+                            <div className="col-md-3" key={i}>
+                                <div className="card mb-1 p-1">
+                                    <div className="card-body">
+                                        <div >
+                                            <div className="d-flex justify-content-between">
+                                                <div>
+                                                    <h3>#{i + 1}</h3>  {ele.name} <br />Rs. {ele.amount}
+                                                </div>
+                                                {i == 0 && <input type="checkbox" checked={data.find(
+                                                    (eles) =>
+                                                        eles.orderId === ele.orderId &&
+                                                        eles.status === "fulfilled"
+                                                )} onChange={(e) => { handleCheckChange(e, ele.orderId) }} />}
+                                            </div>
+                                            <br />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                </div>
+            )
+        }
+
+        const OrderTotalAmount = (props) => {
+            const { data } = props
+
+            const totalAmount = data.reduce((accumulator, currentValue) => {
+                return accumulator + currentValue.amount;
+            }, 0);
+
+            return (
+                <div className="card col-md-4">
+                    <div className="card-body">
+                        Total Amount
+                        <h3>{String(totalAmount)}</h3>
+                    </div>
+                </div>
+            )
+        }
+
+        const OrderContainer = (props) => {
+            const { data, title, search, ordersData, handleChangeSearch, handleCheckChange, handleOrderAdd } = props
+            return (
+                <div className="col-md-8">
+                    <div className="d-flex justify-content-between">
+                        <h3>{title}</h3>
+                        <div className="col-md-6">
+                            <input type="text" value={search} onChange={handleChangeSearch} className="form-control" placeholder="Search Orders" />
+                        </div>
+                    </div>
+                    <hr />
+                    <div >
+                        <OrderItem data={data} handleOrderAdd={handleOrderAdd} />
+                        <OrderedItem data={ordersData} handleCheckChange={handleCheckChange} />
+                        <br />
+                        <OrderTotalAmount data={ordersData} />
+                    </div>
+                </div>
+            )
+        }
+
+        const App = (props) => {
+            const [ordersData, setOrdersData] = useState([])
+
+            const [search, setSearch] = useState('')
+            const [menuItem, setMenuItem] = useState([])
+            const [orders, setOrders] = useState([])
+            const [dataAvailable, setDataAvalibale] = useState(false)
+
+            // MenuItems
+            useEffect(() => {
+                axios.get('http://localhost:3055/api/menu-items')
+                    .then((res) => {
+                        setMenuItem(res.data)
+                        setDataAvalibale(true)
+                    })
+                    .catch((err) => {
+                        alert(err.message)
+                    })
+            }, [])
+            // OrdersData
+            useEffect(() => {
+                if (menuItem) {
+                    axios.get('http://localhost:3055/api/orders')
+                        .then((res) => {
+                            const datas = res.data
+                            const result = matchedData(datas, menuItem)
+                            setOrdersData(result)
+                        })
+                        .catch((err) => {
+                            alert(err.message)
+                        })
+                }
+
+            }, [menuItem])
+
+            const handleSearch = (e) => {
+                const result = e.target.value
+                setSearch(result)
+                if (result.length === 0) {
+                    setOrders([])
+                } else {
+                    if (result.length >= 3) {
+                        axios.get(`http://localhost:3055/api/search?text=${result}`)
+                            .then((res) => {
+                                setOrders(res.data)
+                            }).catch((err) => {
+                                console.log(err)
+                            })
+                    }
+                }
+
+            }
+
+            const handleOrderAdd = (_id) => {
+                axios.post(`http://localhost:3055/api/orders`, { menuItemId: _id })
+                    .then((res) => {
+                        const datas = res.data
+                        const result = findtheMatchData(datas, menuItem)
+                        setOrdersData([...ordersData, result])
+                        setOrders([])
+                        setSearch('')
+                    })
+                    .catch((err) => {
+                        console.log(err)
+                    })
+            }
+
+            const handleCheckChange = (e, _id) => {
+                console.log('_id', _id)
+                const checked = e.target.checked
+                if (checked) {
+                    axios.put(`http://localhost:3055/api/orders/${_id}`)
+                        .then((res) => {
+                            const datas = res.data
+
+                            const output = findtheMatchData(datas, menuItem)
+                            console.log('checked result', output)
+
+                            const result = ordersData.filter(Ele => {
+                                return Ele.orderId !== output.orderId
+                            })
+                            setOrdersData(result)
+                        })
+                        .catch((err) => {
+                            console.log(err)
+                        })
+                }
+
+            }
+            return (
+                <div className="container mt-4">
+                    <h1>Order Management</h1>
+                    <hr />
+                    {dataAvailable ? (
+                        <div className="row">
+                            <MenuItem
+                                data={menuItem}
+                                title={`MenuItem (${menuItem.length})`}
+                            />
+
+                            <OrderContainer
+                                ordersData={ordersData}
+                                data={orders}
+                                search={search}
+                                handleOrderAdd={handleOrderAdd}
+                                handleChangeSearch={handleSearch}
+                                handleCheckChange={handleCheckChange}
+                                title={`Orders (${ordersData.length})`}
+                            />
+                        </div>
+                    ) : <div>Loading.....</div>}
+
+                </div>
+            )
+        }
+
+        ReactDOM.render(<App />, rootHandle)
+
+    </script>
+
+</body>
+
+</html>
